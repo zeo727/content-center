@@ -11,8 +11,28 @@ spring:
       discovery:
         # 指定nacos server的地址
         server-addr: localhost:8848
+        # 指定namespace
+        # namespace: ce076c5a-380f-443c-b65a-b40fd2819070
+        cluster-name: BJ
+        metadata:
+          # 自己这个实例的版本
+          version: v1
+          # 允许调用的提供者版本
+          target-version: v1
   application:
     # 服务名称尽量用-，不要用_，不要用特殊字符
     name: content-center
 server:
   port: 8010
+
+#负载均衡配置
+#细粒度属性配置
+#user-center:
+#  ribbon:
+#    NFloadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+
+#饥饿加载,多个client逗号分隔
+ribbon:
+  eager-load:
+    enabled: true
+    client: user-center

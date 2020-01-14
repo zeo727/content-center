@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,7 +24,7 @@ import java.util.List;
 public class ShareService {
     private final ShareMapper shareMapper;
     private final RestTemplate restTemplate;
-    private final DiscoveryClient discoveryClient;
+//    private final DiscoveryClient discoveryClient;
 
     public ShareDTO findById(Integer id) {
 
@@ -31,28 +33,30 @@ public class ShareService {
         // 发布人id
         Integer userId = share.getUserId();
 
-        /**
-         * 强调：
-         * 了解steam -->jdk 8新特性
-         * lambda表达式
-         * functional --> 函数式编程
-         * **/
-
-
-        // 用户中心所有实例的信息
-        List<ServiceInstance> instances = discoveryClient.getInstances("user-center");
-        String targetURL = instances.stream()
-                //数据变换
-                .map(instance -> instance.getUri().toString() + "users/{id}")
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("当前没有实例！"));
-
-        log.info("请求的目标地址：{}",targetURL);
-        // 怎么调用用户微服务/users/{userId}??
+//        /**
+//         * 强调：
+//         * 了解steam -->jdk 8新特性
+//         * lambda表达式
+//         * functional --> 函数式编程
+//         * **/
+//
+//
+//        // 用户中心所有实例的信息
+//        List<ServiceInstance> instances = discoveryClient.getInstances("user-center");
+//        // 所有用户中心所有实例的请求地址
+//        List<String> targetURLS = instances.stream()
+//                //数据变换
+//                .map(instance -> instance.getUri().toString() + "users/{id}")
+//                .collect(Collectors.toList());
+//        int i = ThreadLocalRandom.current().nextInt(targetURLS.size());
+//
+//        String targetURL = targetURLS.get(i);
+//        log.info("请求的目标地址：{}",targetURL);
+//        // 怎么调用用户微服务/users/{userId}??
 
         //用HTTP GET方法去请求，并且返回一个对象
         UserDTO userDTO = this.restTemplate.getForObject(
-                targetURL, UserDTO.class, userId
+                "http://user-center/users/{userId}", UserDTO.class, userId
         );
 
         ShareDTO shareDTO =new ShareDTO();
