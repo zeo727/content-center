@@ -28,7 +28,7 @@ public class NacosWeightedRule extends AbstractLoadBalancerRule {
             //Ribbon入口
             BaseLoadBalancer loadBalancer = (BaseLoadBalancer) this.getLoadBalancer();
 
-            log.info("lb = {}",loadBalancer);
+            //log.info("lb = {}",loadBalancer);
 
             // 想要请求的微服务的名称
             String name = loadBalancer.getName();

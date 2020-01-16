@@ -1,20 +1,24 @@
 package com.itmuch.contentcenter;
 
 import com.itmuch.contentcenter.dao.content.ShareMapper;
+import com.itmuch.contentcenter.domain.dto.user.UserDTO;
 import com.itmuch.contentcenter.domain.entity.content.Share;
+import com.itmuch.feignclient.TestBaiduFeignClient;
+import com.itmuch.feignclient.TestUserCenterFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
 
 @RestController
 public class TestController {
 
-    @Autowired
+    @Resource
     private ShareMapper shareMapper;
     @Autowired
     private DiscoveryClient discoveryClient;
@@ -47,5 +51,21 @@ public class TestController {
         // 查询指定服务的所有实例的信息
         // consul/eureka/zookeeper...均可用该方法
         return this.discoveryClient.getInstances("user-center");
+    }
+
+    @Resource
+    private TestUserCenterFeignClient testUserCenterFeignClient;
+
+    @GetMapping("test-get")
+    public UserDTO query(UserDTO userDTO){
+        return testUserCenterFeignClient.query(userDTO);
+    }
+
+    //脱离Ribbon的使用方式
+    @Resource
+    private TestBaiduFeignClient testBaiduFeignClient;
+    @GetMapping("baidu")
+    public String baiduIndex(){
+        return this.testBaiduFeignClient.index();
     }
 }
