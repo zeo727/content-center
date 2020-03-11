@@ -1,4 +1,4 @@
-package com.itmuch.feignclient;
+package com.itmuch.contentcenter.feignclient;
 
 import com.itmuch.contentcenter.domain.dto.user.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;

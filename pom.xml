@@ -84,6 +84,36 @@
             <!--<artifactId>feign-okhttp</artifactId>-->
             <!--<version>10.1.0</version>-->
         <!--</dependency>-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>com.alibaba.csp</groupId>-->
+                    <!--<artifactId>sentinel-transport-simple-http</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+        </dependency>
+        <!--/actuator/sentinel-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!--规则持久化：拉模式-->
+        <!--<dependency>-->
+            <!--<groupId>com.alibaba.csp</groupId>-->
+            <!--<artifactId>sentinel-datasource-extension</artifactId>-->
+        <!--</dependency>-->
+        <!--规则持久化：推模式-->
+        <!--<dependency>-->
+            <!--<groupId>com.alibaba.csp</groupId>-->
+            <!--<artifactId>sentinel-datasource-nacos</artifactId>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>com.alibaba.csp</groupId>-->
+            <!--<artifactId>spring-boot-starter-ahas-sentinel-client</artifactId>-->
+            <!--<version>1.3.3</version>-->
+        <!--</dependency>-->
     </dependencies>
 
     <dependencyManagement>
