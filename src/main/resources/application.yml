@@ -20,40 +20,6 @@ spring:
           # 允许调用的提供者版本
           target-version: v1
     sentinel:
-#      datasource:
-#        # 名称随意
-#        flow:
-#          nacos:
-#            server-addr: localhost:8848
-#            dataId: ${spring.application.name}-flow-rules
-#            groupId: SENTINEL_GROUP
-#            # 规则类型，取值见：
-#            # org.springframework.cloud.alibaba.sentinel.datasource.RuleType
-#            rule-type: flow
-#        degrade:
-#          nacos:
-#            server-addr: localhost:8848
-#            dataId: ${spring.application.name}-degrade-rules
-#            groupId: SENTINEL_GROUP
-#            rule-type: degrade
-#        system:
-#          nacos:
-#            server-addr: localhost:8848
-#            dataId: ${spring.application.name}-system-rules
-#            groupId: SENTINEL_GROUP
-#            rule-type: system
-#        authority:
-#          nacos:
-#            server-addr: localhost:8848
-#            dataId: ${spring.application.name}-authority-rules
-#            groupId: SENTINEL_GROUP
-#            rule-type: authority
-#        param-flow:
-#          nacos:
-#            server-addr: localhost:8848
-#            dataId: ${spring.application.name}-param-flow-rules
-#            groupId: SENTINEL_GROUP
-#            rule-type: param-flow
       filter:
         # 打开/关闭掉对Spring MVC端点的保护
         enabled: true
@@ -61,6 +27,22 @@ spring:
         # 指定sentinel 控制台的地址
         dashboard: localhost:8080
         client-ip: 127.0.0.1
+    stream:
+      rocketmq:
+        binder:
+          name-server: 127.0.0.1:9876
+        bindings:
+          output:
+            producer:
+              transactional: true
+              group: tx-add-bonus-group
+      bindings:
+        output:
+          # 用来指定topic
+          destination: add-bonus
+        my-output:
+          destination: stream-my-topic
+
   application:
     # 服务名称尽量用-，不要用_，不要用特殊字符
     name: content-center
@@ -68,13 +50,6 @@ spring:
     allow-bean-definition-overriding: true
 server:
   port: 8010
-
-
-#负载均衡配置
-#细粒度属性配置
-#user-center:
-#  ribbon:
-#    NFloadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
 
 #饥饿加载,多个client逗号分隔
 ribbon:
@@ -84,6 +59,7 @@ ribbon:
 logging:
   level:
     com.itmuch.contentcenter.feignclient.UserCenterFeignClient: debug
+    com.alibaba.nacos: error
 feign:
   sentinel:
     # 为feign整合sentinel
@@ -109,10 +85,16 @@ management:
     web:
       exposure:
         include: '*'
+  endpoint:
+    health:
+      show-details: always
 resttemplate:
   sentinel:
     # 关闭@SentinelRestTemplate注解
     enabled: false
-#ahas.namespace: default
-#project.name: content-center
-#ahas.license: a791265542e74f6ead7eae5d804c2c84
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    # 小坑：必须指定group
+    group: test-group
