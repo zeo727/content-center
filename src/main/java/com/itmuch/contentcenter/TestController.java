@@ -22,6 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.stream.messaging.Source;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +34,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -226,5 +232,22 @@ public class TestController {
                                 .build()
                 );
         return "success";
+    }
+
+    @GetMapping("/tokenRelay/{userId}")
+    public ResponseEntity<UserDTO> tokenRelay(@PathVariable Integer userId, HttpServletRequest request ){
+
+        String token = request.getHeader("X-Token");
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Token", token);
+
+       return this.restTemplate
+                .exchange(
+                        "http://user-center/users/{userId}",
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        UserDTO.class,
+                        userId
+                );
     }
 }

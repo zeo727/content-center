@@ -69,6 +69,8 @@ feign:
       #想要调用的微服务的名称/全局配置
       default:
         loggerLevel: full
+        requestInterceptors:
+          - com.itmuch.contentcenter.interceptor.TokenRelayRequestIntecepor
   httpclient:
     # 让feign使用apache httpclient做请求；而不是默认的urlconnection
     enabled: true
@@ -90,7 +92,7 @@ management:
       show-details: always
 resttemplate:
   sentinel:
-    # 关闭@SentinelRestTemplate注解
+    # 设置成false,表示关闭@SentinelRestTemplate注解
     enabled: false
 
 rocketmq:

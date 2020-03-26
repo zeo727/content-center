@@ -4,6 +4,9 @@ import com.itmuch.contentcenter.domain.dto.user.UserDTO;
 import com.itmuch.contentcenter.feignclient.UserCenterFeignClient;
 import org.springframework.stereotype.Component;
 
+/**
+ * sentinel使用fallback处理降级异常
+ */
 @Component
 public class UserCenterFeignClientFallback implements UserCenterFeignClient {
     @Override

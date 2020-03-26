@@ -36,8 +36,6 @@ public class ShareService {
     private final RocketMQTemplate rocketMQTemplate;
     private final RocketmqTransactionLogMapper rocketmqTransactionLogMapper;
     private final Source source;
-//    private final RestTemplate restTemplate;
-//    private final DiscoveryClient discoveryClient;
 
     public static void main(String[] args) {
         RestTemplate restTemplate = new RestTemplate();
@@ -60,38 +58,6 @@ public class ShareService {
         Share share = this.shareMapper.selectByPrimaryKey(id);
         // 发布人id
         Integer userId = share.getUserId();
-
-//        /**
-//         * 强调：
-//         * 了解steam -->jdk 8新特性
-//         * lambda表达式
-//         * functional --> 函数式编程
-//         * **/
-//
-//
-//        // 用户中心所有实例的信息
-//        List<ServiceInstance> instances = discoveryClient.getInstances("user-center");
-//        // 所有用户中心所有实例的请求地址
-//        List<String> targetURLS = instances.stream()
-//                //数据变换
-//                .map(instance -> instance.getUri().toString() + "users/{id}")
-//                .collect(Collectors.toList());
-//        int i = ThreadLocalRandom.current().nextInt(targetURLS.size());
-//
-//        String targetURL = targetURLS.get(i);
-//        log.info("请求的目标地址：{}",targetURL);
-//        // 怎么调用用户微服务/users/{userId}??
-
-        //用HTTP GET方法去请求，并且返回一个对象
-        /*
-         * 1.代码不可读
-         * 2.复杂的url难以维护:https://www.baidu.com/s?wd=a&rsv_spt=1&rsv_iqid=0x81a9ee5e00024dfa&issp=1&f=8&rsv_bp=1&rsv_idx=2&ie=utf-8&tn=baiduhome_pg&rsv_enter=0&rsv_dl=tb&rsv_sug3=1&inputT=1082&rsv_sug4=1081
-         * 3.难以响应需求的变化，变化没有幸福感
-         * 编程体验不统一
-         * */
-//        UserDTO userDTO = this.restTemplate.getForObject(
-//                "http://user-center/users/{userId}", UserDTO.class, userId
-//        );
         UserDTO userDTO = this.userCenterFeignClient.findById(userId);
         ShareDTO shareDTO = new ShareDTO();
         //消息的装配
@@ -128,40 +94,10 @@ public class ShareService {
                             .setHeader("dto", JSON.toJSONString(auditDTO))
                             .build()
                     );
-
-//            this.rocketMQTemplate.sendMessageInTransaction("tx-add-bonus-group",
-//                    "add-bonus",
-//                    MessageBuilder
-//                            .withPayload(
-//                                    UserAddBonusMsgDTO.builder()
-//                                            .userId(share.getUserId())
-//                                            .bonus(50)
-//                                            .build()
-//                            )
-//                            // header也有妙用
-//                            .setHeader(RocketMQHeaders.TRANSACTION_ID, transactionId)
-//                            .setHeader("share_id",id)
-//                            .build(),
-//                    //arg有大用处
-//                    auditDTO
-//            );
         }
         else {
             this.auditByIdInDB(id,auditDTO);
         }
-//        // 2. 审核资源，将状态设为PASS/REJECT
-//        share.setAuditStatus(auditDTO.getAuditStatusEnum().toString());
-//        this.shareMapper.updateByPrimaryKey(share);
-//        // 3. 如果是PASS，为发布人添加积分
-//        // 异步执行
-//        userCenterFeignClient.addBonus(id,500);
-//
-//        this.rocketMQTemplate.convertAndSend(
-//                "add-bonus",
-//                UserAddBonusMsgDTO.builder()
-//                        .userId(share.getUserId())
-//                        .bonus(50)
-//                        .build());
         // 4.把share写到缓存
         return share;
     }
