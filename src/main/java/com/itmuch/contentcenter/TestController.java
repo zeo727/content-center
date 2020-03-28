@@ -19,8 +19,10 @@ import com.itmuch.contentcenter.rocketmq.MySource;
 import com.itmuch.contentcenter.sentineltest.TestControllerBlockHandlerClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -43,6 +45,7 @@ import java.util.List;
 //thread-pool-2 coreSize=10...
 @RestController
 @Slf4j
+@RefreshScope //nacos配置动态刷新
 public class TestController {
 
     @Resource
@@ -250,4 +253,12 @@ public class TestController {
                         userId
                 );
     }
+    @Value("${your.configuration}")
+    private String yourCongiguration;
+
+    @GetMapping("/test-config")
+    public String testConfiguration(){
+        return this.yourCongiguration;
+    }
+
 }

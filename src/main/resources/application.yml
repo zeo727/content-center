@@ -43,9 +43,6 @@ spring:
         my-output:
           destination: stream-my-topic
 
-  application:
-    # 服务名称尽量用-，不要用_，不要用特殊字符
-    name: content-center
   main:
     allow-bean-definition-overriding: true
 server:
