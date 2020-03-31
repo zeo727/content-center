@@ -1,12 +1,17 @@
 package com.itmuch.contentcenter.service.content;
 
 import com.alibaba.fastjson.JSON;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.itmuch.contentcenter.dao.content.MidUserShareMapper;
 import com.itmuch.contentcenter.dao.content.ShareMapper;
 import com.itmuch.contentcenter.dao.messaging.RocketmqTransactionLogMapper;
 import com.itmuch.contentcenter.domain.dto.content.ShareAuditDTO;
 import com.itmuch.contentcenter.domain.dto.content.ShareDTO;
 import com.itmuch.contentcenter.domain.dto.messaging.UserAddBonusMsgDTO;
+import com.itmuch.contentcenter.domain.dto.user.UserAddBonseDTO;
 import com.itmuch.contentcenter.domain.dto.user.UserDTO;
+import com.itmuch.contentcenter.domain.entity.content.MidUserShare;
 import com.itmuch.contentcenter.domain.entity.content.Share;
 import com.itmuch.contentcenter.domain.entity.messaging.RocketmqTransactionLog;
 import com.itmuch.contentcenter.domain.enums.AuditStatusEnum;
@@ -24,8 +29,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,6 +45,7 @@ public class ShareService {
     private final RocketMQTemplate rocketMQTemplate;
     private final RocketmqTransactionLogMapper rocketmqTransactionLogMapper;
     private final Source source;
+    private final MidUserShareMapper midUserShareMapper;
 
     public static void main(String[] args) {
         RestTemplate restTemplate = new RestTemplate();
@@ -76,7 +86,7 @@ public class ShareService {
             throw new IllegalArgumentException("参数非法！该分享已审核");
         }
         // 3. 如果是PASS，那么发送消息给rocketmq，让用户中心去消费，并为发布人添加积分
-        if (AuditStatusEnum.PASS.equals(auditDTO.getAuditStatusEnum())){
+        if (AuditStatusEnum.PASS.equals(auditDTO.getAuditStatusEnum())) {
             // 发送半消息。。
             String transactionId = UUID.randomUUID().toString();
 
@@ -90,20 +100,19 @@ public class ShareService {
                             )
                             // header也有妙用
                             .setHeader(RocketMQHeaders.TRANSACTION_ID, transactionId)
-                            .setHeader("share_id",id)
+                            .setHeader("share_id", id)
                             .setHeader("dto", JSON.toJSONString(auditDTO))
                             .build()
                     );
-        }
-        else {
-            this.auditByIdInDB(id,auditDTO);
+        } else {
+            this.auditByIdInDB(id, auditDTO);
         }
         // 4.把share写到缓存
         return share;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void auditByIdInDB(Integer id,ShareAuditDTO auditDTO) {
+    public void auditByIdInDB(Integer id, ShareAuditDTO auditDTO) {
         Share share = Share.builder()
                 .id(id)
                 .auditStatus(auditDTO.getAuditStatusEnum().toString())
@@ -115,6 +124,7 @@ public class ShareService {
         //前者只是更新新的model中不为空的字段。后者则会将为空的字段在数据库中置为NULL。
         this.shareMapper.updateByPrimaryKeySelective(share);
     }
+
     @Transactional(rollbackFor = Exception.class)
     public void auditByIdWithRocketMqLog(Integer id, ShareAuditDTO auditDTO, String transactionId) {
         this.auditByIdInDB(id, auditDTO);
@@ -125,5 +135,82 @@ public class ShareService {
                         .log("审核分享...")
                         .build()
         );
+    }
+
+    public PageInfo<Share> q(String title, Integer pageNo, Integer pageSize, Integer userId) {
+        // 它会切入下面这条不分页的SQL，自动拼接分页的SQL
+        PageHelper.startPage(pageNo, pageSize);
+        // 不分页的SQL
+        List<Share> shares = this.shareMapper.selectByParam(title);
+        List<Share> sharesDealed = new ArrayList<>();
+
+        // 1. 如果用户未登录，那么downloadUrl全部设为null
+        if (userId == null) {
+            sharesDealed = shares.stream()
+                    .peek(share -> {
+                        share.setDownloadUrl(null);
+                    })
+                    .collect(Collectors.toList());
+        }
+        // 2. 如果用户登录了，那么查询一下mid_user_share，如果没有数据，那么这条share的downloadUrl也设为null
+        else {
+            sharesDealed = shares.stream()
+                    .peek(share -> {
+                        MidUserShare midUserShare = this.midUserShareMapper.selectOne(
+                                MidUserShare.builder()
+                                        .userId(userId)
+                                        .shareId(share.getId())
+                                        .build()
+                        );
+                        if (midUserShare == null) {
+                            share.setDownloadUrl(null);
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+        return new PageInfo<>(sharesDealed);
+    }
+
+    public Share exchangeById(Integer id, HttpServletRequest request) {
+        Object userId = request.getAttribute("id");
+        Integer integerUserId = (Integer) userId;
+        // 1. 根据id查询share，校验是否存在
+        Share share = this.shareMapper.selectByPrimaryKey(id);
+        Integer price = share.getPrice();
+        if (share == null) {
+            // IllegalArgumentException不合法参数异常
+            throw new IllegalArgumentException("该分享不存在");
+        }
+        // 2. 如果当前用户已经兑换过该分享，则直接返回
+        MidUserShare midUserShare = this.midUserShareMapper.selectOne(
+                MidUserShare.builder()
+                        .shareId(id)
+                        .userId(integerUserId)
+                        .build()
+        );
+        if (midUserShare != null) {
+            return share;
+        }
+        // 3. 根据当前登录的用户id，查询积分是否够
+
+        UserDTO userDTO = this.userCenterFeignClient.findById(integerUserId);
+
+        if (price > userDTO.getBonus()) {
+            throw new IllegalArgumentException("用户积分不足");
+        }
+        // 4. 扣减积分 & 往mid_user_share里插入一条数据
+        this.userCenterFeignClient.addBonus(
+                UserAddBonseDTO.builder()
+                        .userId(integerUserId)
+                        .bonus(0 - price)
+                        .build()
+        );
+        this.midUserShareMapper.insert(
+                MidUserShare.builder()
+                        .userId(integerUserId)
+                        .shareId(id)
+                        .build()
+        );
+        return share;
     }
 }

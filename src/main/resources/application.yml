@@ -62,6 +62,7 @@ ribbon:
 logging:
   level:
     com.itmuch.contentcenter.feignclient.UserCenterFeignClient: debug
+    com.itmuch.contentcenter.dao.content: debug
     com.alibaba.nacos: error
 feign:
   sentinel:
@@ -103,3 +104,6 @@ rocketmq:
   producer:
     # 小坑：必须指定group
     group: test-group
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
