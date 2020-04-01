@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Date;
@@ -59,6 +58,14 @@ public class TestController {
     private TestBaiduFeignClient testBaiduFeignClient;
     @Autowired
     private TestService testService;
+    @Autowired
+    private RestTemplate restTemplate;
+    @Resource
+    private Source source;
+    @Resource
+    private MySource mySource;
+    @Value("${your.configuration}")
+    private String yourCongiguration;
 
     @GetMapping("/test")
     public List<Share> testInsert() {
@@ -187,7 +194,6 @@ public class TestController {
         return a;
     }
 
-
     /**
      * 1.5 处理降级
      * - sentinel 1.6 可以处理Throwable
@@ -199,35 +205,26 @@ public class TestController {
         return "限流，或者降级了 fallback";
     }
 
-    @Autowired
-    private RestTemplate restTemplate;
-
     @GetMapping("/test-rest-template-sentinel/{userId}")
-    public UserDTO test(@PathVariable Integer userId){
+    public UserDTO test(@PathVariable Integer userId) {
         //
         return this.restTemplate
-                .getForObject("http://user-center/users/{userId}",UserDTO.class,userId);
+                .getForObject("http://user-center/users/{userId}", UserDTO.class, userId);
     }
 
-    @Resource
-    private Source source;
-
     @GetMapping("/test-stream")
-    public String testStream(){
+    public String testStream() {
         this.source.output()
                 .send(
                         MessageBuilder
-                        .withPayload("消息体")
-                        .build()
+                                .withPayload("消息体")
+                                .build()
                 );
         return "success";
     }
 
-    @Resource
-    private MySource mySource;
-
     @GetMapping("/test-stream-2")
-    public String testStream2(){
+    public String testStream2() {
         this.mySource.output()
                 .send(
                         MessageBuilder
@@ -238,13 +235,13 @@ public class TestController {
     }
 
     @GetMapping("/tokenRelay/{userId}")
-    public ResponseEntity<UserDTO> tokenRelay(@PathVariable Integer userId, HttpServletRequest request ){
+    public ResponseEntity<UserDTO> tokenRelay(@PathVariable Integer userId, HttpServletRequest request) {
 
         String token = request.getHeader("X-Token");
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-Token", token);
 
-       return this.restTemplate
+        return this.restTemplate
                 .exchange(
                         "http://user-center/users/{userId}",
                         HttpMethod.GET,
@@ -253,12 +250,16 @@ public class TestController {
                         userId
                 );
     }
-    @Value("${your.configuration}")
-    private String yourCongiguration;
 
     @GetMapping("/test-config")
-    public String testConfiguration(){
+    public String testConfiguration() {
         return this.yourCongiguration;
+    }
+
+    @GetMapping("/test-node-service")
+    public String testNodeService() {
+        // localhost:8060
+        return this.restTemplate.getForObject("http://wii", String.class);
     }
 
 }

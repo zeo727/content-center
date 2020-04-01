@@ -1,9 +1,9 @@
 package com.itmuch.contentcenter;
 
+import com.alibaba.cloud.sentinel.annotation.SentinelRestTemplate;
 import com.itmuch.contentcenter.rocketmq.MySource;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.alibaba.sentinel.annotation.SentinelRestTemplate;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.cloud.stream.annotation.EnableBinding;
@@ -31,7 +31,7 @@ public class ContentCenterApplication {
     @Bean
     @LoadBalanced
     @SentinelRestTemplate
-    public RestTemplate restTemplate(){
+    public RestTemplate restTemplate() {
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.setInterceptors(
                 Collections.singletonList(

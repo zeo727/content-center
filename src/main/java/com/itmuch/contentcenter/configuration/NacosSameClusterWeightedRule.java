@@ -1,17 +1,16 @@
 package com.itmuch.contentcenter.configuration;
 
+import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
+import com.alibaba.cloud.nacos.ribbon.NacosServer;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
-import com.alibaba.nacos.client.naming.core.Balancer;
 import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.AbstractLoadBalancerRule;
 import com.netflix.loadbalancer.BaseLoadBalancer;
 import com.netflix.loadbalancer.Server;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.alibaba.nacos.NacosDiscoveryProperties;
-import org.springframework.cloud.alibaba.nacos.ribbon.NacosServer;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -63,7 +62,9 @@ public class NacosSameClusterWeightedRule extends AbstractLoadBalancerRule {
                         clusterName,
                         instances
                 );
-            } else instancesToBeChosen = sameClusterInstances;
+            } else {
+                instancesToBeChosen = sameClusterInstances;
+            }
             //4.基于权重的负载均衡算法，返回1个实例
             Instance instance = ExtendBalancer.getHostByRandomWeight2(instancesToBeChosen);
             log.info("选择的实例是 port = {}, instance = {}", instance.getPort(), instance);
